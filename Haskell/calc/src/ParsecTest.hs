@@ -6,6 +6,20 @@ import Data.Char
 import Control.Applicative hiding (many)
 import Text.Parsec hiding ((<|>))
 
+data Lambda = Arg String Lambda
+            | Expr
+              deriving ( Show
+                       , Eq)
+
+data Expr = Value Int
+          | Function Expr Expr
+          | Plus     Expr Expr 
+          | Minus    Expr Expr 
+          | Times    Expr Expr 
+          | Divide   Expr Expr 
+          | Modulo   Expr Expr 
+          
+
 digitToDouble :: Char -> Double
 digitToDouble =  fromIntegral . digitToInt
 
@@ -25,11 +39,15 @@ num =  do xs <- many $ digitToDouble <$> digit
           where f x y = x * 10 + y
                 g x y = x + y * 0.1
 
-op :: (Num a, Stream s m Char) => ParsecT s u m (a -> a -> a)
-op =  (const (+) <$> symbol "+") <|>
-      (const (-) <$> symbol "-")
+op0 :: (Fractional a, Stream s m Char) => ParsecT s u m (a -> a -> a)
+op0 =  (const (*) <$> symbol "*") <|>
+       (const (/) <$> symbol "/")
+
+op1 :: (Num a, Stream s m Char) => ParsecT s u m (a -> a -> a)
+op1 =  (const (+) <$> symbol "+") <|>
+       (const (-) <$> symbol "-")
 
 expr :: Stream s m Char => ParsecT s u m Double
-expr =  num `chainl1` op
+expr =  num `chainl1` op0 `chainl1` op1
 
 printParse str = print $ parse expr "" str
