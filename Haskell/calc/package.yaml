@@ -27,7 +27,7 @@ library:
   source-dirs: src
 
 executables:
-  calc-exe:
+  calc:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
