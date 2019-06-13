@@ -12,28 +12,26 @@ def part(user):
 	#+の時
 	if '+' in user:
 		user_p = user.split('+')
-		x, y = int(user_p[0]), int(user_p[1])
-		user_int = x, y
+		user_int = int(user_p[0]), int(user_p[1])	
 		return plus(user_int)
 	#-の時
 	elif '-' in user:
 		user_m = user.split('-')
-		x, y = int(user_m[0]), int(user_m[1])
-		user_int = x, y
+		user_int = int(user_m[0]), int(user_m[1])
 		return minus(user_int)
 	#*の時
 	elif '*' in user:
 		user_t = user.split('*')
-		x, y = int(user_t[0]), int(user_t[1])
-		user_int = x, y
+		user_int = int(user_t[0]), int(user_t[1])
 		return times(user_int)
 	#/の時
 	elif '/' in user:
 		user_d = user.split('/')
-		x, y = int(user_d[0]), int(user_d[1])
-		user_int = x, y
+		user_int = int(user_d[0]), int(user_d[1])
 		return division(user_int)
-	
+	else:
+		print('もう一度入力してください')
+		return input_user()
 #計算
 #+
 def plus(user_int):
