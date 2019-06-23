@@ -16,6 +16,8 @@ data Expr = Value  Rational
           | Divide Expr Expr
           | Modulo Expr Expr
           | Power  Expr Expr
+          | Func1 String Expr
+          | Func2 String Expr Expr
             deriving ( Show
                      , Eq )
 
@@ -28,10 +30,8 @@ digitToIntegral :: Num a => Char -> a
 digitToIntegral =  fromIntegral . digitToInt
 
 num :: Stream s m Char => ParsecT s u m Expr
-num =  do xs  <- many $ digitToIntegral <$> digit
-          spaces
+num =  do xs  <- many1 $ digitToIntegral <$> digit
           dot <- optionMaybe (char '.')
-          spaces
           ys  <- many $ digitToIntegral <$> digit
           spaces
           return $ Value $ toRational $ buildDouble xs ys
@@ -79,7 +79,7 @@ execExpr (Divide a b) =  execExpr a / execExpr b
 execExpr (Modulo a b) =  mod' (execExpr a) (execExpr b)
 execExpr (Power  a b) =  rPow (execExpr a) (execExpr b)
 
-printParse str = do putStrLn $ either show show                res
+printParse str = do putStrLn $ either show show res
                     putStrLn $ either show (show . execExpr) res
                     putStrLn $ either show (show . fromRational . execExpr) res
-                    where res = parse expr "" str
+                    where res = parse expr "Calc" str
