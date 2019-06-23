@@ -4,6 +4,8 @@ module Calc where
 
 import Data.Ratio
 import Data.Char
+import Data.Fixed
+import Data.Either
 import Control.Applicative hiding (many)
 import Text.Parsec hiding ((<|>))
 
@@ -14,7 +16,7 @@ data Expr = Value  Rational
           | Divide Expr Expr
           | Modulo Expr Expr
             deriving ( Show
-                     )
+                     , Eq )
 
 symbol    :: Stream s m Char => String -> ParsecT s u m String
 symbol xs =  do result <- string xs
@@ -45,13 +47,13 @@ parens =  do symbol "("
 term :: Stream s m Char => ParsecT s u m Rational
 term =  try parens <|> num
 
---op3 :: (Stream s m Char) => ParsecT s u m (Rational -> Rational -> Rational)
---op3 =  ((^) <$ symbol "^")
---       where f a b = fromRational
+op3 :: (Stream s m Char) => ParsecT s u m (Rational -> Rational -> Rational)
+op3 =  rPow <$ symbol "^"
 
 op2 :: (Stream s m Char) => ParsecT s u m (Rational -> Rational -> Rational)
 op2 =  ((*) <$ symbol "*") <|>
-       ((/) <$ symbol "/")
+       ((/) <$ symbol "/") <|>
+       (mod' <$ symbol "%")
 
 op1 :: (Stream s m Char) => ParsecT s u m (Rational -> Rational -> Rational)
 op1 =  ((+) <$ symbol "+") <|>
@@ -59,6 +61,13 @@ op1 =  ((+) <$ symbol "+") <|>
 
 expr :: Stream s m Char => ParsecT s u m Rational
 expr =  do spaces
-           term `chainl1` op2 `chainl1` op1
+           term `chainl1` op3
+                `chainl1` op2
+                `chainl1` op1
 
-printParse str = print $ parse expr "" str
+rPow     :: Rational -> Rational -> Rational
+rPow a b =  toRational (fromRational a ** fromRational b)
+
+printParse str = do putStrLn $ either (show) (show)                res
+                    putStrLn $ either (show) (show . fromRational) res
+                    where res = parse expr "" str

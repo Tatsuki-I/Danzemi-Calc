@@ -2,6 +2,7 @@ module Main where
 
 import Calc
 import System.IO
+import System.Console.Haskeline
 
 main :: IO ()
 main =  do putStrLn "Hello!"
