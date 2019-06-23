@@ -1,6 +1,6 @@
 module Main where
 
-import ParsecTest
+import Calc
 import System.IO
 
 main :: IO ()

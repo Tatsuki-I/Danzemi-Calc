@@ -7,7 +7,7 @@ import Data.Char
 import Control.Applicative hiding (many)
 import Text.Parsec hiding ((<|>))
 
-data Expr = Value Rational
+data Expr = Value  Rational
           | Plus   Expr Expr
           | Minus  Expr Expr
           | Times  Expr Expr
@@ -21,14 +21,20 @@ symbol xs =  do result <- string xs
                 spaces
                 return result
 
-digitToRational :: Char -> Rational
-digitToRational =  fromIntegral . digitToInt
+digitToIntegral :: Num a => Char -> a
+digitToIntegral =  fromIntegral . digitToInt
 
 num :: Stream s m Char => ParsecT s u m Rational
-num =  do xs <- many $ digitToRational <$> digit
+num =  do xs  <- many $ digitToIntegral <$> digit
           spaces
-          return $ foldl f 0 xs
-          where f x y = x * 10 + y
+          dot <- optionMaybe (char '.')
+          spaces
+          ys  <- many $ digitToIntegral <$> digit
+          spaces
+          return $ toRational $ buildDouble xs ys
+          where f x y             = x * 10 + y
+                g x y             = x + y * 0.1
+                buildDouble xs ys = foldl f 0 xs + foldl g 0 ys
 
 parens :: Stream s m Char => ParsecT s u m Rational
 parens =  do symbol "("
