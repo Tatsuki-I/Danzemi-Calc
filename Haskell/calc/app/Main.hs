@@ -1,6 +1,6 @@
 module Main where
 
-import Calc
+import AST
 import System.IO
 import System.Console.Haskeline
 
