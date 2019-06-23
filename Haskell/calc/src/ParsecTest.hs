@@ -6,6 +6,7 @@ import Data.Char
 import Control.Applicative hiding (many)
 import Text.Parsec hiding ((<|>))
 
+{-
 data Lambda = Arg String Lambda
             | Expr
               deriving ( Show
@@ -18,7 +19,7 @@ data Expr = Value Int
           | Times    Expr Expr 
           | Divide   Expr Expr 
           | Modulo   Expr Expr 
-          
+-}
 
 digitToDouble :: Char -> Double
 digitToDouble =  fromIntegral . digitToInt
