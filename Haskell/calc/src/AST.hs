@@ -4,10 +4,11 @@ module AST where
 
 import Data.Ratio
 import Data.Char
-import Data.Fixed
-import Data.Either
+import Data.Fixed                 (mod')
+import Data.Either                (either)
+import Data.Maybe                 (isNothing)
 import Control.Applicative hiding (many)
-import Text.Parsec hiding ((<|>))
+import Text.Parsec         hiding ((<|>))
 
 data Expr = Value  Rational
           | Plus   Expr Expr
@@ -30,11 +31,14 @@ digitToIntegral :: Num a => Char -> a
 digitToIntegral =  fromIntegral . digitToInt
 
 num :: Stream s m Char => ParsecT s u m Expr
-num =  do xs  <- many1 $ digitToIntegral <$> digit
+num =  do minus <- optionMaybe (char '-')
+          xs  <- many1 $ digitToIntegral <$> digit
           dot <- optionMaybe (char '.')
           ys  <- many $ digitToIntegral <$> digit
           spaces
-          return $ Value $ toRational $ buildDouble xs ys
+          return $ Value $ (if isNothing minus 
+                               then id
+                               else (* (- 1))) $ toRational $ buildDouble xs ys
           where f x y             = x * 10 + y
                 g x y             = x + y * 0.1
                 buildDouble xs ys = foldl f 0 xs + foldl g 0 ys
@@ -70,7 +74,7 @@ expr =  do spaces
 rPow     :: Rational -> Rational -> Rational
 rPow a b =  toRational (fromRational a ** fromRational b)
 
-execExpr             :: Expr -> Rational
+execExpr              :: Expr -> Rational
 execExpr (Value  a)   =  a
 execExpr (Plus   a b) =  execExpr a + execExpr b
 execExpr (Minus  a b) =  execExpr a - execExpr b
