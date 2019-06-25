@@ -10,15 +10,16 @@ import Data.Maybe                 (isNothing)
 import Control.Applicative hiding (many)
 import Text.Parsec         hiding ((<|>))
 
-data Expr = Value  Rational
-          | Plus   Expr Expr
-          | Minus  Expr Expr
-          | Times  Expr Expr
-          | Divide Expr Expr
-          | Modulo Expr Expr
-          | Power  Expr Expr
-          | Func1 String Expr
-          | Func2 String Expr Expr
+data Expr = Value     Rational
+          | Plus      Expr   Expr
+          | Subtract  Expr   Expr
+          | Times     Expr   Expr
+          | Divide    Expr   Expr
+          | Modulo    Expr   Expr
+          | Power     Expr   Expr
+          | Func1     String Expr
+          | Func2     String Expr Expr
+          | Minus     Expr
             deriving ( Show
                      , Eq )
 
@@ -31,12 +32,12 @@ digitToIntegral :: Num a => Char -> a
 digitToIntegral =  fromIntegral . digitToInt
 
 num :: Stream s m Char => ParsecT s u m Expr
-num =  do minus <- optionMaybe (char '-')
+num =  do sign <- optionMaybe (char '-')
           xs  <- many1 $ digitToIntegral <$> digit
           dot <- optionMaybe (char '.')
           ys  <- many $ digitToIntegral <$> digit
           spaces
-          return $ Value $ (if isNothing minus 
+          return $ Value $ (if isNothing sign
                                then id
                                else (* (- 1))) $ toRational $ buildDouble xs ys
           where f x y             = x * 10 + y
@@ -63,7 +64,7 @@ op2 =  (Times <$ symbol "*") <|>
 
 op1 :: (Stream s m Char) => ParsecT s u m (Expr -> Expr -> Expr)
 op1 =  (Plus <$ symbol "+") <|>
-       (Minus <$ symbol "-")
+       (Subtract <$ symbol "-")
 
 expr :: Stream s m Char => ParsecT s u m Expr
 expr =  do spaces
@@ -75,13 +76,14 @@ rPow     :: Rational -> Rational -> Rational
 rPow a b =  toRational (fromRational a ** fromRational b)
 
 execExpr              :: Expr -> Rational
-execExpr (Value  a)   =  a
-execExpr (Plus   a b) =  execExpr a + execExpr b
-execExpr (Minus  a b) =  execExpr a - execExpr b
-execExpr (Times  a b) =  execExpr a * execExpr b
-execExpr (Divide a b) =  execExpr a / execExpr b
-execExpr (Modulo a b) =  mod' (execExpr a) (execExpr b)
-execExpr (Power  a b) =  rPow (execExpr a) (execExpr b)
+execExpr (Value     a)   =  a
+execExpr (Plus      a b) =  execExpr a + execExpr b
+execExpr (Subtract  a b) =  execExpr a - execExpr b
+execExpr (Times     a b) =  execExpr a * execExpr b
+execExpr (Divide    a b) =  execExpr a / execExpr b
+execExpr (Modulo    a b) =  mod' (execExpr a) (execExpr b)
+execExpr (Power     a b) =  rPow (execExpr a) (execExpr b)
+execExpr (Minus     a)   =  (negate . execExpr) a
 
 printParse str = do putStrLn $ either show show res
                     putStrLn $ either show (show . execExpr) res
